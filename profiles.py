@@ -153,3 +153,35 @@ def sky_plot(map, title, Tmin, Tmax, output_file):
 
 
 sky_plot(map, title, Tmin, Tmax, output_file)
+
+
+
+
+
+
+########################################################################################################
+
+# Appendix:
+# --------
+#
+
+# Radial profile used to fit large and isolated spiral in reference 
+# Luparello et. al, MNRAS, Volume 518, Issue 4, February 2023, Pages 5643–5652.
+#
+#   ------------------------------------------------------------------------------------------------
+#     cos_sep = np.cos(th_gxs) * np.cos(th) + np.sin(th_gxs) * np.sin(th) * np.cos(phi - phi_gxs)
+#     omega = np.arccos( cos_sep )
+
+#     a1 = np.deg2rad(0.3)
+#     a2 = np.deg2rad(1.0)
+#     a3 = np.deg2rad(10.0)
+    
+#     Amp_1 = -8.66
+#     Amp_2 = 7.0 * np.log10( np.rad2deg(omega) ) - 5.0
+#     Amp_3 = 5.0 * np.log10( np.rad2deg(omega) ) - 5.0
+#     Amp_4 = np.zeros( len(cos_sep) )
+    
+#     prof = np.where( omega  > a3, Amp_4, Amp_3 )
+#     prof = np.where( omega <= a2, Amp_2, prof )
+#     prof = np.where( omega <= a1, Amp_1, prof )
+#   ------------------------------------------------------------------------------------------------
