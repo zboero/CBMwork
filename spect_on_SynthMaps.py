@@ -66,6 +66,8 @@ path_Mod4       = foregr+'model4_nside512_muK_ringordering.fits'
 path_Mod4extz   = foregr+'model4_extendedz_nside512_muK_ringordering.fits'
 path_Mod4extz01 = foregr+'model4_extendedz0.1_nside512_muK_ringordering.fits'
 
+path_testMod1       = foregr+'testmodel_extendedz0.05_nside512_muK_ringordering.fits'
+path_testMod2       = foregr+'testmodel2_extendedz0.05_nside512_muK_ringordering.fits'
 
 # Read the power spectrum released by Planck2018
 Dls_data2018_table = np.genfromtxt(PS     , skip_header=1, unpack=True)        # measured
@@ -90,11 +92,11 @@ Cls_bfit  = np.append( mon_dip, Dls_bfit2018 * clfactor )
 # ---------------------------------------------------------------------------------
 
 # Choose the model
-path_Mod = path_Mod1extz10
+path_Mod = path_testMod2
 Mod, header = hp.read_map( path_Mod, nest=False, h=True, field=(0) )
 
 # Set the simulation of maps
-n_maps = 10
+n_maps = 1000
 nside  = 512                                                                   # nisde resolution of the healpix map
 
 lMax = 3*nside - 1                                                             # max multipole of the spectrae
@@ -166,12 +168,26 @@ err_Dls     = err_Cls[ 2 : lMax ] * (2.*np.pi)**(-1.) * ( ell * ( ell + 1 ) )
 Dls_Plk     = Cls_Plk[ 2 : lMax ] * (2.*np.pi)**(-1.) * ( ell * ( ell + 1 ) )
 err_Dls_Plk = err_Cls_Plk[ 2 : lMax ] * (2.*np.pi)**(-1.) * ( ell * ( ell + 1 ) )
 
+
+# It is important to know the spectrum of the foreground map modelled out.
+# If there is no correlation between the CMB and the correction model,
+# the following should be valid: Cls_modif = Cls_true + Cls_fore
+#
+# It is imporant to note here that we only have a single realization of the foreground
+# correction model.
+# So, our reconstruction might be not the best, speially at low multipoles...
+# For low multipoles it is perhaps better to aplly a maximum likelihood analysis in
+# order to obtain the spectrum..
+Cls_fore = hp.anafast( Mod, nspec=None, lmax=lMax, iter=it_e, alm=False)
+
+
 # Save the data in .dat format
-stack = np.column_stack( ( ell, Dls, err_Dls, Dls_Plk, err_Dls_Plk, Dls_bfit2018[2:lMax] ) )
-header_dat = "       ell        ,       Dls        ,      err_Dls        ,     Dls_recov      ,   err_Dls_recov     ,   Dls_bfitPlanck "
+stack = np.column_stack( ( ell, Dls, err_Dls, Dls_Plk, err_Dls_Plk, Dls_bfit2018[2:lMax], Cls_fore[2:lMax] ) )
+header_dat = "       ell        ,       Dls        ,      err_Dls        ,     Dls_recov      ,\
+              err_Dls_recov     ,   Dls_bfitPlanck   ,      Cls_foreModel     "
 
 output_file = data+'foregroundmap_'
-output_file = output_file+'model1extendedz10_nside512_muK_ringordering.dat'
+output_file = output_file+'testmodel2_extendedz0.05_nside512_muK_ringordering.dat'
 np.savetxt( output_file, stack, header=header_dat, \
             fmt=['%18.f','%18.12E','%18.12E','%18.12E','%18.12E','%18.12E']
             )
@@ -212,6 +228,6 @@ def spectrum_plot(ell, Dls, err_Dls, Dls_Plk, lMax, title, output_png):
 
 
 # Make the plot
-title = 'Power Spectrum Model 1 extendedz1.0'
-output_png = 'spectrum_.png'
+title = 'Power Spectrum test Model 1 extendedz0.05'
+output_png = 'spectrum_2.png'
 spectrum_plot(ell, Dls, err_Dls, Dls_Plk, lMax, title, output_png)
