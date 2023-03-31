@@ -47,45 +47,39 @@ import healpy as hp
 import matplotlib.pyplot as plt
 
 # Define the number of galaxies and the size of the map
-n_gxs = 1000
-nside = 512
+nside = 64#512
 
-# Generate random positions for the galaxies
-def rdm_sample(n_gxs):
-    ''' Produces a uniform random sample of points in the unit sphere
+# n_gxs = 1000
+# # Generate random positions for the galaxies
+# def rdm_sample(n_gxs):
+#     ''' Produces a uniform random sample of points in the unit sphere
         
-    Parameters
-    ----------
-    n_events : int
-        The total number of events of the map
+#     Parameters
+#     ----------
+#     n_events : int
+#         The total number of events of the map
         
-    Returns
-    -------
-    A pandas dataframe with the events
-    '''
+#     Returns
+#     -------
+#     A pandas dataframe with the events
+#     '''
 
-    lon_array   = np.random.uniform( low= 0.0 , high= 2*np.pi, size= n_gxs )
-    costheta    = np.random.uniform( low= -1.0, high= 1.0    , size= n_gxs )
-    colat_array = np.arccos( costheta )         # the range is [0, pi]
-    lat_array   = 0.5*np.pi - colat_array
+#     lon_array   = np.random.uniform( low= 0.0 , high= 2*np.pi, size= n_gxs )
+#     costheta    = np.random.uniform( low= -1.0, high= 1.0    , size= n_gxs )
+#     colat_array = np.arccos( costheta )         # the range is [0, pi]
+#     lat_array   = 0.5*np.pi - colat_array
 
-    cols_df_rdm = { 'l (rad)': lon_array,
-                    'colat (rad)': colat_array,
-                    'b (rad)': lat_array
-                  }
-    df_rdm = pd.DataFrame( data= cols_df_rdm )
+#     cols_df_rdm = { 'l (rad)': lon_array,
+#                     'colat (rad)': colat_array,
+#                     'b (rad)': lat_array
+#                   }
+#     df_rdm = pd.DataFrame( data= cols_df_rdm )
 
-    return df_rdm
+#     return df_rdm
 
-df_rdm = rdm_sample(n_gxs)
-th_gxs, phi_gxs = df_rdm['colat (rad)'], df_rdm['l (rad)']
+# df_rdm = rdm_sample(n_gxs)
+# th_gxs, phi_gxs = df_rdm['colat (rad)'], df_rdm['l (rad)']
 
-
-
-# Create an empty map
-n_pix = hp.nside2npix(nside)
-map = np.zeros(n_pix)
-th_map, phi_map = hp.pix2ang( nside, np.arange(n_pix) )
 
 # Define the radial profile function
 def radial_profile( th, phi, th_gxs, phi_gxs, flag, size, z, dist_5gxy ):
@@ -105,7 +99,7 @@ def radial_profile( th, phi, th_gxs, phi_gxs, flag, size, z, dist_5gxy ):
     size : numpy array
         galaxy optical size in kpc
     z : numpy array
-        redshift of the gaalxy
+        redshift of the galaxy
     dist_5gxy : numpy array
         Distance to the 5th galaxy (This usually comes from a bigger catalogue than the sample)
 
@@ -137,9 +131,9 @@ def radial_profile( th, phi, th_gxs, phi_gxs, flag, size, z, dist_5gxy ):
         prof = np.where( omega <= a1, Amp_1, prof )
         
     elif (flag == 'Frode_model'):
-        a_deep   = - np.deg2rad(30.0)
+        a_deep   = - 30.0
         size_ref = 8.5
-        dist_ref = np.deg2rad(3.0)
+        dist_ref = 3.0#np.deg2rad(3.0)
         a_scale  = ( size / size_ref )**2 * ( dist_5gxy / dist_ref )**4
 
         z_ref    = 0.01
@@ -148,20 +142,26 @@ def radial_profile( th, phi, th_gxs, phi_gxs, flag, size, z, dist_5gxy ):
         
         prof     = np.zeros( len(cos_sep) )
         lin      = ( a_deep * a_scale ) * ( 1.0 - (1.0 / b_dist) * omega )
-        prof     = np.where( omega  > ext_prof, prof, lin )
+        prof     = np.where( omega  > b_dist, prof, lin )
         
     return prof
 
+
+# Create an empty map
+n_pix = hp.nside2npix(nside)
+map = np.zeros(n_pix)
+th_map, phi_map = hp.pix2ang( nside, np.arange(n_pix) )
+
 # Add the radial profiles to the map
 flag      = 'Frode_model'
-H0        = 70.0
-c_luz = 299792.458                         # in km/s
-asec2rad  = np.pi/( 180.0*3600.0 )          # Convertion factor between [arcseconds] and [radians].
-size      = (df_gxs['v']/H0 * 10**( df_gxs['r_ext'] ) * 1000 * asec2rad).to_numpy()
-th_gxs    = df_gxs["b"].to_numpy()
-phi_gxs   = df_gxs["l"].to_numpy()
-z         = df_gxs["v"].to_numpy() / c_luz
-dist_5gxy = dist5gxs
+H0        = 100.0
+c_luz     = 299792.458                        # in km/s
+#asec2rad  = np.pi/( 180.0*3600.0 )           # Convertion factor between [arcseconds] and [radians].
+size      = df_gxs["rad"].to_numpy()          #(df_gxs['v']/H0 * 10**( df_gxs['r_ext'] ) * 1000 * asec2rad).to_numpy()
+th_gxs    = np.deg2rad(90.0 - df_gxs["DECdeg"].to_numpy())
+phi_gxs   = np.deg2rad(df_gxs["RAdeg"].to_numpy())
+z         = df_gxs["z"].to_numpy()            #df_gxs["v"].to_numpy() / c_luz
+dist_5gxy = df_gxs["d5"].to_numpy()           #dist5gxs
 n_gxs     = len(df_gxs)
 for i in range(n_gxs):
     profile_i = radial_profile( th_map, phi_map , th_gxs[i], phi_gxs[i], flag, size[i], z[i], dist_5gxy[i] )
@@ -172,10 +172,6 @@ map -= np.mean(map)
 
 
 # Visualize the map
-Tmin = np.min(map)
-Tmax = np.max(map)
-title = 'profile'
-output_file = 'profile_FrodeModel.png'
 def sky_plot(map, title, Tmin, Tmax, output_file):
     ''' Produces a Mollweide map
         Requires healpy
@@ -199,9 +195,7 @@ def sky_plot(map, title, Tmin, Tmax, output_file):
     import healpy as hp
     import matplotlib.pyplot as plt
 
-
-    colormap = 'inferno'          #'viridis', 'plasma', 'magma', 'cividis'
-    #colormap = 'viridis'
+    colormap = 'jet'                         # 'inferno', 'viridis', 'plasma', 'magma', 'cividis', etc...
     mask = hp.read_map( common_mask, nest=False )
     mask = hp.ud_grade( mask, nside)
     map = np.where(mask, map, hp.UNSEEN)
@@ -209,10 +203,14 @@ def sky_plot(map, title, Tmin, Tmax, output_file):
     hp.mollview(map, coord='G', unit='Temperature [$\mu$K]', xsize=800,
                      title=title, cbar=True, cmap=colormap,
                      min=Tmin, max=Tmax, badcolor='black')
+    #hp.visufunc.graticule( dpar=15, dmer=30, coord='G')
     plt.savefig(output_file)
     plt.close()
 
-
+Tmin = np.min(map)
+Tmax = np.max(map)
+title = 'profile'
+output_file = 'profile_FrodeModel.png'
 sky_plot(map, title, Tmin, Tmax, output_file)
 
 
@@ -275,13 +273,12 @@ def sky_plot( th, phi, th_str, phi_str, coord_sys, title, output_file ):
 
 # sky map with the events
 th_str, phi_str = 'b (deg)', 'l (deg)'
-th_gxs  = np.deg2rad( 90.0 - th_gxs )
-phi_gxs = np.deg2rad( phi_gxs )
+#th_gxs  = np.deg2rad( 90.0 - th_gxs )
+#phi_gxs = np.deg2rad( phi_gxs )
 coord_sys = 'Galactic'
 title   = 'Only spirals'
 output_file = graficos+'skymap_FrodeModel.png'
 sky_plot( th_gxs, phi_gxs, th_str, phi_str, coord_sys, title, output_file )
-
 
 ########################################################################################################
 
@@ -309,3 +306,23 @@ sky_plot( th_gxs, phi_gxs, th_str, phi_str, coord_sys, title, output_file )
 #     prof = np.where( omega <= a2, Amp_2, prof )
 #     prof = np.where( omega <= a1, Amp_1, prof )
 #   ------------------------------------------------------------------------------------------------
+
+
+# Radial profile used to fit enlarged samples of galaxies
+# Hansen et. al
+#
+#   ------------------------------------------------------------------------------------------------
+#     a_deep   = - 30.0
+#     size_ref = 8.5
+#     dist_ref = 3.0#np.deg2rad(3.0)
+#     a_scale  = ( size / size_ref )**2 * ( dist_5gxy / dist_ref )**4
+#
+#     z_ref    = 0.01
+#     ext_prof = np.deg2rad(2.0)
+#     b_dist   = ext_prof *  ( z_ref / z ) * ( dist_ref / dist_5gxy )**(2.8)
+#
+#     prof     = np.zeros( len(cos_sep) )
+#     lin      = ( a_deep * a_scale ) * ( 1.0 - (1.0 / b_dist) * omega )
+#     prof     = np.where( omega  > b_dist, prof, lin )
+#   ------------------------------------------------------------------------------------------------
+
