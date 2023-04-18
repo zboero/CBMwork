@@ -153,17 +153,19 @@ map = np.zeros(n_pix)
 th_map, phi_map = hp.pix2ang( nside, np.arange(n_pix) )
 
 # Add the radial profiles to the map
+#flag      = 'original_paper_I'
 flag      = 'Frode_model'
 H0        = 100.0
-c_luz     = 299792.458                        # in km/s
-#asec2rad  = np.pi/( 180.0*3600.0 )           # Convertion factor between [arcseconds] and [radians].
-size      = df_gxs["rad"].to_numpy()          #(df_gxs['v']/H0 * 10**( df_gxs['r_ext'] ) * 1000 * asec2rad).to_numpy()
-th_gxs    = np.deg2rad(90.0 - df_gxs["DECdeg"].to_numpy())
-phi_gxs   = np.deg2rad(df_gxs["RAdeg"].to_numpy())
-z         = df_gxs["z"].to_numpy()            #df_gxs["v"].to_numpy() / c_luz
-dist_5gxy = df_gxs["d5"].to_numpy()           #dist5gxs
+c_luz     = 299792.458                         # in km/s
+#asec2rad  = np.pi/( 180.0*3600.0 )          # Convertion factor between [arcseconds] and [radians].
+size      = df_gxs["rad"].to_numpy()   #(df_gxs['v']/H0 * 10**( df_gxs['r_ext'] ) * 1000 * asec2rad).to_numpy()
+th_gxs    = np.deg2rad(90.0 - df_gxs["b"].to_numpy()) #np.deg2rad(90.0 - df_gxs["DECdeg"].to_numpy())
+phi_gxs   = np.deg2rad(df_gxs["l"].to_numpy())#np.deg2rad(df_gxs["RAdeg"].to_numpy())
+z         = df_gxs["z"].to_numpy() #df_gxs["v"].to_numpy() / c_luz
+dist_5gxy = df_gxs["d5"].to_numpy() #dist5gxs
 n_gxs     = len(df_gxs)
-for i in range(n_gxs):
+
+for i in range(n_gxs): #n_gxs
     profile_i = radial_profile( th_map, phi_map , th_gxs[i], phi_gxs[i], flag, size[i], z[i], dist_5gxy[i] )
     map += profile_i
 
@@ -273,8 +275,8 @@ def sky_plot( th, phi, th_str, phi_str, coord_sys, title, output_file ):
 
 # sky map with the events
 th_str, phi_str = 'b (deg)', 'l (deg)'
-#th_gxs  = np.deg2rad( 90.0 - th_gxs )
-#phi_gxs = np.deg2rad( phi_gxs )
+th_gxs  = np.deg2rad(90.0 - df_gxs["b"].to_numpy())#np.deg2rad( 90.0 - th_gxs )
+phi_gxs = np.deg2rad(df_gxs["l"].to_numpy())#np.deg2rad( phi_gxs )
 coord_sys = 'Galactic'
 title   = 'Only spirals'
 output_file = graficos+'skymap_FrodeModel.png'
