@@ -50,4 +50,52 @@ PS_bfit = PS_folder+'COM_PowerSpect_CMB-base-plikHM-TTTEEE-'\
 import numpy as np
 import healpy as hp
 
+# Load the .fits files
+load_maps       = data+'maps_for_ezequiel/'
+foregr          = load_maps+'foregroundmap_'
+path_Mod1       = foregr+'model1_nside512_muK_ringordering.fits'
+path_Mod1extz   = foregr+'model1_extendedz_nside512_muK_ringordering.fits'
+path_Mod1extz01 = foregr+'model1_extendedz0.1_nside512_muK_ringordering.fits'
+path_Mod1extz10 = foregr+'model1_extendedz1.0_nside512_muK_ringordering.fits'
+path_Mod2       = foregr+'model2_nside512_muK_ringordering.fits'
+path_Mod2extz   = foregr+'model2_extendedz_nside512_muK_ringordering.fits'
+path_Mod2extz01 = foregr+'model2_extendedz0.1_nside512_muK_ringordering.fits'
+path_Mod3       = foregr+'model3_nside512_muK_ringordering.fits'
+path_Mod3extz   = foregr+'model3_extendedz_nside512_muK_ringordering.fits'
+path_Mod4       = foregr+'model4_nside512_muK_ringordering.fits'
+path_Mod4extz   = foregr+'model4_extendedz_nside512_muK_ringordering.fits'
+path_Mod4extz01 = foregr+'model4_extendedz0.1_nside512_muK_ringordering.fits'
+
+path_testMod1       = foregr+'testmodel_extendedz0.05_nside512_muK_ringordering.fits'
+path_testMod2       = foregr+'testmodel2_extendedz0.05_nside512_muK_ringordering.fits'
+
+# Read the power spectrum released by Planck2018
+Dls_data2018_table = np.genfromtxt(PS     , skip_header=1, unpack=True)        # measured
+Dls_bfit2018_table = np.genfromtxt(PS_bfit, skip_header=1, unpack=True)        # best-fit based model LCMD
+
+# Get the TT spectrum (Dls)
+Dls_data2018 = Dls_data2018_table[1]                                           # in units of muK**2
+Dls_bfit2018 = Dls_bfit2018_table[1]                                           # in units of muK**2
+
+# Get the multipole index
+ell_idx = Dls_data2018_table[0]                                                # ell's from 2 to l_max
+ell     = np.append( np.array([0.0, 1.0]), ell_idx )                           # ell's from 0 to l_max
+
+# Get the TT spectrum (Cls)
+mon_dip = np.array([0.0, 0.0])                                                 # Vanishing monopole and dipole
+clfactor = 2.0*np.pi/( ell_idx * (ell_idx + 1) )
+Cls_data  = np.append( mon_dip, Dls_data2018 * clfactor )
+Cls_bfit  = np.append( mon_dip, Dls_bfit2018 * clfactor )
+
+
+# Define the two-point angular correlation function in terms of the spectrum
+def TT_Corr(Dl, gamma, lMax):
+    import numpy as np
+    from scipy.special import eval_legendre
+
+    sum=0
+    for n in range(2,lMax):
+        sum= sum + (2*n+1)/(4*np.pi)*(2*np.pi/(n*(n+1))*Dl[n-2])*eval_legendre(n,np.cos(gamma))
+    return sum
+
 
