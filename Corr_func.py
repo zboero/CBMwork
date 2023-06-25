@@ -98,4 +98,18 @@ def TT_Corr(Dl, gamma, lMax):
         sum= sum + (2*n+1)/(4*np.pi)*(2*np.pi/(n*(n+1))*Dl[n-2])*eval_legendre(n,np.cos(gamma))
     return sum
 
-
+ang_corr = TT_Corr(Dl, gamma, lMax)
+# Plot of the TT_corr function
+plt.figure()
+plt.plot( gamma*np.pi/180.0, ang_corr, label='data' )
+plt.title( "Angular two-point correlation function", loc='center' )
+plt.axes
+plt.xlim(0,180)
+plt.ylim(-400,400)
+plt.xlabel('$\gamma \; [degree]$', fontsize='x-large')
+plt.ylabel('$Cor(\gamma) \; [\mu K^2]$',fontsize='x-large')    
+plt.axhline(y=0, color='grey', linewidth=0.01)
+plt.legend()
+plt.savefig(graficos+'angCorr_.png')
+plt.show()
+plt.close()
